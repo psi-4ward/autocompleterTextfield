@@ -3,6 +3,7 @@
 * Initialize the system
 */
 define('TL_MODE', 'BE');
+define('BYPASS_TOKEN_CHECK',true);
 require_once('../../initialize.php');
 
 class AutocompleterTextfieldResponder extends Controller
@@ -10,39 +11,47 @@ class AutocompleterTextfieldResponder extends Controller
 	public function __construct()
 	{
 		parent::__construct();
+		$this->import('Database');
 		
-		$this->tbl = $this->Input->get('tbl');
-		$this->fld = $this->Input->get('fld');
 		
 		// little validation
+		$this->tbl = $this->Input->get('tbl');
+		$this->fld = $this->Input->get('fld');
+		$this->mcw = $this->Input->get('mcw');
 		if(!preg_match('~^[a-z0-9_\-]+$~i',$this->tbl)) die('ERROR 201');
 		if(!preg_match('~^[a-z0-9_\-]+$~i',$this->fld)) die('ERROR 202');
 		
 		// load the DCA
 		$this->loadDataContainer($this->tbl);
-		
-		// get options from options_callback
-		if(is_array($GLOBALS['TL_DCA'][$this->tbl]['fields'][$this->fld]['options_callback']))
+		if($this->mcw)
 		{
-			if (!is_object($GLOBALS['TL_DCA'][$this->tbl]['fields'][$this->fld]['options_callback'][0]))
-			{
-				$this->import($GLOBALS['TL_DCA'][$this->tbl]['fields'][$this->fld]['options_callback'][0]);
-			}
-		
-			$arrOptions = $this->$GLOBALS['TL_DCA'][$this->tbl]['fields'][$this->fld]['options_callback'][0]->$GLOBALS['TL_DCA'][$this->tbl]['fields'][$this->fld]['options_callback'][1]($this,$this->Input->post('value'));
+			if(!preg_match('~^[a-z0-9_\-]+$~i',$this->mcw)) die('ERROR 203');
+			$dca = $GLOBALS['TL_DCA'][$this->tbl]['fields'][$this->fld]['eval']['columnFields'][$this->mcw];
+		}
+		else
+		{
+			$dca = $GLOBALS['TL_DCA'][$this->tbl]['fields'][$this->fld];
 		}
 		
-		// TODO: support options and foreignKey parameters too		
+		// let the Controller::prepareForWidget calc the options
+		$temp = $this->prepareForWidget($dca, $this->fld, '', null, $this->tbl);
 		
+		// reformat options for Autocompleter-JS
 		$arrRet = array();
-		foreach($arrOptions as $id => $val)
+		foreach($temp['options'] as $val)
 		{
-			$arrRet[] = array('id'=>$id,'value'=>$val);
+			$arrRet[] = array('id'=>$val['value'],'value'=>$val['label']);
 		}
-		echo json_encode($arrRet);
+		unset($temp);
 		
+		// filter the array to return only matching elements
+		$search = $this->Input->post('value');
+		$arrRet = array_filter($arrRet,function($val) use($search){
+			return strripos($val['value'], $search) !== false;
+		});
 		
-		$this->import('Database');
+		echo json_encode(array_values($arrRet));
+		
 	}
 }
 

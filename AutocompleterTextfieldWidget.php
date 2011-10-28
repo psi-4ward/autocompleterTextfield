@@ -83,42 +83,47 @@ class AutocompleterTextfieldWidget extends Widget
 		}
 		
 		// load autocompleter 
-		$GLOBALS['TL_JAVASCRIPT']['autocompleter']  = 'system/modules/autocompleterTextfield/html/js/ac_compress.src.js';
-		$GLOBALS['TL_CSS']['autocompleter'] 		= 'system/modules/autocompleterTextfield/html/css/auto_completer.css';
-		$GLOBALS['TL_JAVASCRIPT']['autocompleterHelper'] = 'system/modules/autocompleterTextfield/html/js/helper.js';
+		$GLOBALS['TL_JAVASCRIPT']['autocompleter']  = 'plugins/autocompleter/js/ac_compress.src.js';
+		$GLOBALS['TL_CSS']['autocompleter'] 		= 'plugins/autocompleter/css/auto_completer.css';
+		$GLOBALS['TL_JAVASCRIPT']['autocompleterHelper'] = 'system/modules/autocompleterTextfield/html/helper.js';
+
+		// try to guess MultiColumnWizard usage
+		$mcw = false;
+		if(preg_match("~^([^\[]+)\[(\d+)\]\[([^\]]+)\]$~i",$this->strName,$erg))
+		{
+			// this is a MultiColumnWizard, try to guess the fieldname
+			$this->strField = $erg[1];
+			$mcw=$erg[3];
+		}
 		
+		// Store ID (array-key) instead of the value from the textfield 
 		if($this->storeId)
 		{
-			$arrOptions = array();
-			
-			// TODO: support options and foreignKey parameters too
-			
-			// get options from options_callback
-			if(!$this->strField)
+			// get value to the ID saved in $this->varValue
+			$strValue = '';
+			foreach($this->options as $v)
 			{
-				// probalby this is a MultiColumnWizard, try to guess the fieldname
-				$this->strField = substr($this->strName,0,strpos($this->strName, '[')); 
-			}
-			
-			if(is_array($GLOBALS['TL_DCA'][$this->strTable]['fields'][$this->strField]['options_callback']))
-			{
-				if (!is_object($GLOBALS['TL_DCA'][$this->strTable]['fields'][$this->strField]['options_callback'][0]))
+				if($v['value'] == $this->varValue)
 				{
-					$this->import($GLOBALS['TL_DCA'][$this->strTable]['fields'][$this->strField]['options_callback'][0]);
+					$strValue = $v['label'];
+					break;
 				}
-			
-				$arrOptions = $this->$GLOBALS['TL_DCA'][$this->strTable]['fields'][$this->strField]['options_callback'][0]->$GLOBALS['TL_DCA'][$this->strTable]['fields'][$this->strField]['options_callback'][1]($this);
 			}
+			
 			
 			return  '<input type="hidden" name="'.$this->strName.'" value="'.specialchars($this->varValue).'"/>'
 					.'<input type="text" id="ctrl_'.$this->strId.'" class="tl_text'.(strlen($this->strClass) ? ' ' . $this->strClass : '')
-					.' autocompleterTextfield" value="'.specialchars($arrOptions[$this->varValue]).'"'.$this->getAttributes().' onfocus="Backend.getScrollOffset();">'
+					.' autocompleterTextfield" value="'.specialchars($strValue).'"'.$this->getAttributes().' onfocus="Backend.getScrollOffset();"'
+					.(($mcw)?' multicolumnwizard="'.$mcw.'"':'') 
+					.'>'
 					.$this->wizard;
 		}
 		else
 		{
 			return '<input type="text" name="'.$this->strName.'" id="ctrl_'.$this->strId.'" class="tl_text'.(strlen($this->strClass) ? ' ' . $this->strClass : '')
-					.' autocompleterTextfield" value="'.specialchars($this->varValue).'"'.$this->getAttributes().' onfocus="Backend.getScrollOffset();">'
+					.' autocompleterTextfield" value="'.specialchars($this->varValue).'"'.$this->getAttributes().' onfocus="Backend.getScrollOffset();"'
+					.(($mcw)?' multicolumnwizard="'.$mcw.'"':'')
+					.'>'
 					.$this->wizard;
 		}
 

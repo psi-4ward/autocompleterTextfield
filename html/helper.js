@@ -1,7 +1,17 @@
-window.addEvent('domready',initAutocompleterTextfields);
+window.addEvent('domready',function(){
+	// Init autocompleter for textfields
+	initAutocompleterTextfields();
+	
+	// Register MultiColumnWizard HOOK
+	if(typeof MultiColumnWizard != 'undefined')
+		MultiColumnWizard.execHOOK.push(function(){	initAutocompleterTextfields(); });
+});
 
-MultiColumnWizard.execHOOK.push(function(){	initAutocompleterTextfields(); });
 
+/**
+ * Searches all input-fields with class autocompleterTextfield
+ * and initialize the Autocompleter
+ */
 function initAutocompleterTextfields()
 {
 	$$('input.autocompleterTextfield').each(function(el){
@@ -9,6 +19,9 @@ function initAutocompleterTextfields()
 	});
 }
 
+/**
+ * Class for handling the Autocompleter
+ */
 var AutocompleterTextfield = new Class({
 	
 	/**
@@ -24,11 +37,14 @@ var AutocompleterTextfield = new Class({
 		var tbl = el.getParent('form').getElement('input[name=FORM_SUBMIT]').get('value');
 		var tmp = el.get('id').match(/^ctrl_(.*)_row\d+_/);
 		var fld = (tmp) ? tmp[1] : el.get('id').substr(5);
+		var mcw = el.get('multicolumnwizard') ? '&mcw='+el.get('multicolumnwizard') : ''; 
 		
-	    this.autocompleter = new Autocompleter.Request.JSON(el, 'system/modules/autocompleterTextfield/ajax.php?tbl='+tbl+'&fld='+fld, {
+	    this.autocompleter = new Autocompleter.Request.JSON(el, 'system/modules/autocompleterTextfield/ajax.php?tbl='+tbl+'&fld='+fld+mcw, {
 	        'postVar': 'value',
 	        'injectChoice':this.generateChoice,
 	        'autoSubmit':false,
+	        'minLength':3,
+	        'delay':500,
 	        'onSelection':function(inp,el,sel,val,x){
 	        	var hiddenField = inp.getParent().getElement('input[type=hidden]');
 				if(hiddenField != null)
