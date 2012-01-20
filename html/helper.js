@@ -1,11 +1,10 @@
+if(typeof MultiColumnWizard != 'undefined')
+	MultiColumnWizard.addOperationClickCallback('copy', initAutocompleterTextfields);
+
 window.addEvent('domready',function(){
 	// Init autocompleter for textfields
 	initAutocompleterTextfields();
-	
-	// Register MultiColumnWizard HOOK
-	if(typeof MultiColumnWizard != 'undefined')
-		MultiColumnWizard.operationClickCallbacks['copy'].push(function(){	initAutocompleterTextfields(); });
-		//MultiColumnWizard.execHOOK.push(function(){	initAutocompleterTextfields(); });
+
 });
 
 
@@ -13,7 +12,7 @@ window.addEvent('domready',function(){
  * Searches all input-fields with class autocompleterTextfield
  * and initialize the Autocompleter
  */
-function initAutocompleterTextfields()
+function initAutocompleterTextfields(el, row)
 {
 	$$('input.autocompleterTextfield').each(function(el){
 		new AutocompleterTextfield(el);
