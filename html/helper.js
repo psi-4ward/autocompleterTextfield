@@ -4,7 +4,8 @@ window.addEvent('domready',function(){
 	
 	// Register MultiColumnWizard HOOK
 	if(typeof MultiColumnWizard != 'undefined')
-		MultiColumnWizard.execHOOK.push(function(el,cmd,id){if(cmd=='copy') initAutocompleterTextfields(); });
+		MultiColumnWizard.operationClickCallbacks['copy'].push(function(){	initAutocompleterTextfields(); });
+		//MultiColumnWizard.execHOOK.push(function(){	initAutocompleterTextfields(); });
 });
 
 
