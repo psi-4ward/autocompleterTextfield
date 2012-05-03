@@ -36,14 +36,17 @@ class AutocompleterTextfieldResponder extends Controller
 		// let the Controller::prepareForWidget calc the options
 		$temp = $this->prepareForWidget($dca, $this->fld, '', null, $this->tbl);
 		
-		// reformat options for Autocompleter-JS
+		// reformat options for Autocompleter-JS and unique values
 		$arrRet = array();
+		$arrVals = array();
 		foreach($temp['options'] as $val)
 		{
+			if(in_array($val['label'],$arrVals)) continue;
 			$arrRet[] = array('id'=>$val['value'],'value'=>$val['label']);
+			$arrVals[] = $val['label'];
 		}
 		unset($temp);
-		
+
 		// filter the array to return only matching elements
 		$search = $this->Input->post('value');
 		$arrRet = array_filter($arrRet,function($val) use($search){
